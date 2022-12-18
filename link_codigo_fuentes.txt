@@ -1,0 +1,7 @@
+
+chim_composicion: https://code.earthengine.google.com/7725cf90314b5d2b66c0919ca81285e1?noload=true
+chim_puntos_entrenamiento: https://code.earthengine.google.com/61efa1d4dca3cabd3b4e2b135abbd431?noload=true
+chim_puntos_prueba: https://code.earthengine.google.com/bc2347dd8c6d5f335bfb87552fb70fbe?noload=true
+chim_algoritmo_cart_completo: https://code.earthengine.google.com/7e33d13db7c57d3e25df8b483b8b4a05?noload=true
+chim_algoritmo_rf_completo: https://code.earthengine.google.com/f3b40d413a92f993ef5f71ab113abc89?noload=true
+chim_algoritmo_svm_completo: https://code.earthengine.google.com/34fe203d54b82822f71bc2e414483ed8?noload=true

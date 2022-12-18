@@ -1,0 +1,127 @@
+// Se muestra el mapa compuesto
+Map.centerObject(region, 8);
+Map.addLayer(composition, {min: 0.0,max: 0.3,bands: ['B4', 'B3', 'B2'], }, 'RGB');
+
+var palette = [ 
+  '2840ff', //(0)  AGUA   
+  'A65a3a', //(1)  URBANO           
+  '5aff28', //(2)  FORESTAL    
+  'eeff25', ///3)  CULTIVO
+  'bf04c2', //(4)  SUELO DESNUDO 
+  'ff871b', //(5)  ARBUSTIVO
+  'ffe7f8'  //(6)  NIEVE
+];
+
+// Nombres de las leyendas
+var names = ['AGUA', 'URBANO', 'FORESTAL', 'CULTIVO', 'SUELO DESNUDO', 'ARBUSTIVO', 'NIEVE'];
+
+// Establecer posicion del panel
+var legend = ui.Panel({
+  style: {
+    position: 'bottom-left',
+    padding: '8px 15px'
+  }
+});
+ 
+// Crear titulo
+var legendTitle = ui.Label({
+  value: 'Cuberturas',
+  style: {
+    fontWeight: 'bold',
+    fontSize: '18px',
+    margin: '0 0 4px 0',
+    padding: '0'
+  }
+});
+
+// Agregar titulo al panel
+legend.add(legendTitle);
+ 
+// Crear y aplicar estilos
+var makeRow = function(color, name) {
+ 
+  // Crear etiqueta del color
+  var colorBox = ui.Label({
+    style: {
+      backgroundColor: '#' + color,
+      // Definir alto y ancho de cuadro de color
+      padding: '8px',
+      margin: '0 0 4px 0'
+    }
+  });
+ 
+  // Crear el texto de la descripcion
+  var description = ui.Label({
+    value: name,
+    style: {margin: '0 0 4px 6px'}
+  });
+ 
+  //Panel final
+  return ui.Panel({
+    widgets: [colorBox, description],
+    layout: ui.Panel.Layout.Flow('horizontal')
+  });
+};
+
+// Agregar color y nombres
+for (var i = 0; i < 7; i++) {
+  legend.add(makeRow(palette[i], names[i]));
+}
+
+// Agregar leyenda al mapa
+Map.add(legend);
+
+//DESARROLLO DEL CLASIFICADOR
+
+// Seleccion de bandas
+var bands = composition.bandNames()
+print('Bandas: ', bands);
+
+// Datos de entrenamiento
+var training_data = composition.select(bands).sampleRegions({
+  collection: training,
+  properties: ['target'],
+  scale: 10
+});
+
+// Datos de prueba
+var test_data = composition.select(bands).sampleRegions({
+  collection: test,
+  properties: ['target'],
+  scale: 10
+});
+
+// Contalibilizador de datos
+print("Datos Entrenamiento: ", training_data.aggregate_count(".all"));
+print("Datos Validacion: ", test_data.aggregate_count(".all"));
+
+// Entrenamiento del algoritmo
+var cart_classifier = ee.Classifier.smileCart(300, 50).train({
+    features: training_data,
+    classProperty: 'target',
+    inputProperties: bands
+}); 
+
+// Obtener resultado de la clasificacion.
+print('Resultado de entrenamiento: ', cart_classifier.explain());
+
+// Imagen clasificada, focal_mode() reducir efecto sal pimienta
+var img_classified = composition.select(bands).classify(cart_classifier).focal_mode();
+
+// Visualizar el resultado
+Map.addLayer(img_classified.clip(region), {min: 0, max: 6, palette: palette}, 'CART', false);
+
+// VALIDACION
+print('VALIDACION DATOS DE ENTRENAMIENTO')
+var validated = test_data.classify(cart_classifier);
+
+// Matriz de confusion
+var mc = validated.errorMatrix("target", "classification");
+print("Matriz de Confusión: ", mc);
+
+// Metricas
+print('Accuracy (precision general): ', mc.accuracy());
+print('Precision (specificity): ', mc.consumersAccuracy());
+print('Sensitivity (recall): ', mc.producersAccuracy());
+print('f1-score: ', mc.fscore());
+print("Indice Kappa: ", mc.kappa());

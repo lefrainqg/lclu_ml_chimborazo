@@ -1,0 +1,99 @@
+/*
+Requerimientos:
+  - roi = Región de interés
+  - period_of_interest = Define el periodo en el que se van a filtrar las imágenes satelitales con una fecha de inicio y una fecha de finalización
+  - inBands = Selecciona las bandas Sentine 2 con imágenes en diferentes resoluciones 
+  - outBands = Son las andas finales con las que cuenta esta imagen compuesta incluyen NDVI; BSI
+*/
+
+var period_of_interest = ee.Filter.date('2020-01-01', '2021-12-31');
+var inBands = ["B2","B3","B4","B6","B8","B11"]
+var outBands = inBands.concat("NDVI","BSI")
+
+Map.centerObject(roi,12);
+
+//Function to mask the clouds in Sentinel-2
+function maskS2clouds(image) {
+  var qa = image.select('QA60');
+
+  // Los bits 10 y 11 son nubes y cirros respectivamente.
+  var cloudBitMask = 1 << 10;
+  var cirrusBitMask = 1 << 11;
+
+  // Los dos valores deben ponerse en cero.
+  var mask = qa.bitwiseAnd(cloudBitMask).eq(0).and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+
+  return image.updateMask(mask).divide(10000);
+}
+
+// Construya la colección Sentinel 2, filtrada por fecha, límites y porcentaje de cobertura de nubes
+var dataset = ee.ImageCollection('COPERNICUS/S2_SR')
+                  .filter(period_of_interest)
+                  .filterBounds(roi)
+                  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE',20))
+                  .map(maskS2clouds);
+print("Sentinel 2 Image Collection", dataset)
+
+
+// Añadimos NDBI y BSI a los índices espectrales
+// NDVI (Sentinel 2) = (B8 – B4) / (B8 + B4)
+var addNDVI = function(image) {
+  var ndvi = image.normalizedDifference(['B8', 'B4'])
+    .rename('NDVI')
+    .copyProperties(image,['system:time_start']);
+  return image.addBands(ndvi);
+};
+
+//BSI (Sentinel 2) = (B11 + B4) – (B8 + B2) / (B11 + B4) + (B8 + B2)
+
+var addBSI = function(image) {
+  var bsi = image.expression(
+    '((RED + SWIR) - (NIR + BLUE)) / ((RED + SWIR) + (NIR + BLUE)) ', 
+    {
+      'RED': image.select('B4'), 
+      'BLUE': image.select('B2'),
+      'NIR': image.select('B8'),
+      'SWIR': image.select('B11'),
+    }
+  )
+  .rename('BSI')
+  .copyProperties(image,['system:time_start']);
+  return image.addBands(bsi);
+};
+
+//Collection with all images also containing the NDVI and BSI indices
+var collection = dataset.select(inBands).map(addNDVI).map(addBSI);
+print(collection,'Collection with inBands and Statistic indices');
+
+// Creamos índices espectrales adicionales 
+var band_median = collection.select(inBands).median()
+var ndvimax = collection.select('NDVI').reduce(ee.Reducer.max()).rename("NDVI_MAX");
+var ndvimean = collection.select('NDVI').reduce(ee.Reducer.mean()).rename("NDVI");
+var ndvistd = collection.select('NDVI').reduce(ee.Reducer.stdDev()).float().rename("NDVI_STD");
+var bsimax = collection.select('BSI').reduce(ee.Reducer.max()).rename("BSI_MAX");
+var bsimean = collection.select('BSI').reduce(ee.Reducer.mean()).rename("BSI");
+var bsistd = collection.select('BSI').reduce(ee.Reducer.stdDev()).float().rename("BSI_STD");
+
+//Añadimos estos índices a los imágenes
+var compclip = band_median.addBands(ndvimax).addBands(ndvimean).addBands(ndvistd).addBands(bsimax).addBands(bsimean).addBands(bsistd).clip(roi);
+print("Composition", compclip)
+
+//Seleccionar y extraer las imágenes con las bandas deseadas definidas como outBands
+var final_bands = compclip.select(outBands)
+print("Bands of the final image", final_bands)
+
+//Visulaizamos y exportamos la imagen final 
+Map.addLayer(final_bands, {  min: 0.0, max: 0.3, bands: ['B4', 'B3', 'B2']}, 'RGB');
+Map.addLayer(final_bands, {  min: 0.0, max: 0.3, bands: ['B8', 'B4', 'B3']}, 'CIR');
+Map.addLayer(final_bands, {  min: 0.0, max: 0.3, bands: ['B11', 'B8', 'B4']}, 'NDVI');
+Map.addLayer(final_bands, {  min: 0.0, max: 0.3, bands: final_bands.select('BSI').bands}, 'BSI');
+
+
+//Export the image to an Earth Engine asset
+Export.image.toAsset({
+  image: final_bands,
+  region: roi,
+  maxPixels:  10000000000,
+  description: 'chim_data_composicion',
+  scale: 10
+});

@@ -1,0 +1,10 @@
+Map.addLayer(region,  {color: '#4169E1'}, 'Chimborazo')
+Map.centerObject(region);
+
+var puntos_prueba = Agua.merge(Urbano).merge(Forestal).merge(Cultivo).merge(Suelo_Desnudo).merge(Arbustivo).merge(Nieve);
+
+Export.table.toAsset({
+  collection: puntos_prueba,
+  description:'chim_data_prueba',
+  assetId: 'chim_data_prueba',
+});

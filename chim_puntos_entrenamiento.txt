@@ -1,0 +1,80 @@
+
+var palette = [ 
+  '2840ff', //(0)  AGUA   
+  'a65a3a', //(1)  URBANO           
+  '5aff28', //(2)  FORESTAL    
+  'eeff25', ///3)  CULTIVO
+  'bf04c2', //(4)  SUELO DESNUDO 
+  'ff871b', //(5)  ARBUSTIVO
+  'ffe7f8'  //(6)  NIEVE
+];
+
+// Nombres de las leyendas
+var names = ['AGUA', 'URBANO', 'FORESTAL', 'CULTIVO', 'SUELO DESNUDO', 'ARBUSTIVO', 'NIEVE'];
+
+// Establecer posicion del panel
+var legend = ui.Panel({
+  style: {
+    position: 'bottom-left',
+    padding: '8px 15px'
+  }
+});
+ 
+// Crear titulo
+var legendTitle = ui.Label({
+  value: 'Cubertura',
+  style: {
+    fontWeight: 'bold',
+    fontSize: '18px',
+    margin: '0 0 4px 0',
+    padding: '0'
+  }
+});
+// Agregar titulo al panel
+legend.add(legendTitle);
+ 
+// Crear y aplicar estilos
+var makeRow = function(color, name) {
+ 
+  // Crear etiqueta del color
+  var colorBox = ui.Label({
+    style: {
+      backgroundColor: '#' + color,
+      // Definir alto y ancho de cuadro de color
+      padding: '8px',
+      margin: '0 0 4px 0'
+    }
+  });
+ 
+  // Crear el texto de la descripcion
+  var description = ui.Label({
+    value: name,
+    style: {margin: '0 0 4px 6px'}
+  });
+ 
+  //Panel final
+  return ui.Panel({
+    widgets: [colorBox, description],
+    layout: ui.Panel.Layout.Flow('horizontal')
+  });
+};
+
+// Agregar color y nombres
+for (var i = 0; i < 7; i++) {
+  legend.add(makeRow(palette[i], names[i]));
+}
+
+// Agregar leyenda al mapa
+Map.add(legend);
+
+// Agregar mapa
+Map.addLayer(region,  {color: '#4169E1'}, 'Chimborazo');
+Map.centerObject(region);
+
+var puntos_entrenamiento = Agua.merge(Urbano).merge(Forestal).merge(Cultivo).merge(Suelo_Desnudo).merge(Arbustivo).merge(Nieve);
+ 
+Export.table.toAsset({
+  collection: puntos_entrenamiento,
+  description:'chim_data_entrenamiento',
+  assetId: 'chim_data_entrenamiento',
+});
