@@ -1,27 +1,36 @@
-# lclu_ml_chimborazo
+# Clasificación de la cobertura del suelo en Chimborazo
 
-Repositorio con recursos del trabajo.
+Recursos del trabajo final de **Maestría en Software** de la Universidad Técnica de Machala:
+**"Clasificación de la cobertura del suelo en la provincia de Chimborazo mediante imágenes satelitales y aprendizaje automático"** (diciembre de 2022).
 
-> Los recursos que se expone en el repositorio pertenece al trabajo final de Maestría de Software de la Universidad Técnica de Machala, que titula: CLASIFICACIÓN DE LA COBERTURA DEL SUELO EN LA PROVINCIA DEL CHIMBORAZO MEDIANTE IMÁGENES SATELITALES Y APRENDIZAJE AUTOMÁTICO.
+## Resumen
 
-## IMPORTANTE
+Clasificación supervisada en **Google Earth Engine** de imágenes satelitales en 7 clases de cobertura,
+comparando tres algoritmos: **CART**, **Random Forest** y **SVM**.
 
--  Se requiere una cuenta de Google para su utilizacion.
--  En los archivos .txt se puede encontrar el código fuente.
--  El documento .xls presenta el desarrollo de la matriz de confusión y observacion de los casos de prueba de los algoritmos de clasificación.
--  El archivo
-```sh
-link_codigo_fuentes.txt
-```
-presenta los enlaces al codigo fuente del autor.
+**Clases:** agua · urbano · forestal · cultivo · suelo desnudo · arbustivo · nieve
 
-## AUTORES
+## Contenido
 
--  Luis Efraín Quingue Guaminga;
--  Jennifer Katherin Célleri Pacheco;
+| Archivo | Descripción |
+|---|---|
+| `chim_composicion.txt` | Composición de la imagen de la región |
+| `chim_puntos_entrenamiento.txt` | Puntos de entrenamiento |
+| `chim_puntos_prueba.txt` | Puntos de prueba |
+| `chim_algoritmo_cart_completo.txt` | Clasificación con CART |
+| `chim_algoritmo_rf_completo.txt` | Clasificación con Random Forest |
+| `chim_algoritmo_svm_completo.txt` | Clasificación con SVM |
+| `validacion.xlsx` | Matrices de confusión y validación de los casos de prueba |
+| `link_codigo_fuentes.txt` | Enlaces a los scripts en Earth Engine |
+
+## Uso
+
+1. Necesitas una cuenta de Google con acceso a [Google Earth Engine](https://code.earthengine.google.com/).
+2. Abre los enlaces de `link_codigo_fuentes.txt`, o copia el código de los `.txt` en el editor de Earth Engine.
+
+## Autores
+
+- Luis Efraín Quingue Guaminga
+- Jennifer Katherin Célleri Pacheco
 - Eduardo Alejandro Tusa Jumbo
--  Wilmer Braulio Rivas Asanza;
-
-## Diciembre 2022.
-
-
+- Wilmer Braulio Rivas Asanza
